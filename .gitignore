@@ -6,4 +6,4 @@ internal
 **/.DS_Store
 **/.vscode
 data
-my_scripts/*
+my_scripts/
