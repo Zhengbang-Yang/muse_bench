@@ -7,3 +7,5 @@ internal
 **/.vscode
 data
 my_scripts/
+wandb/
+
