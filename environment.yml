@@ -30,3 +30,4 @@ dependencies:
     - torch==2.2
     - tqdm
     - transformers==4.40
+    - wandb
