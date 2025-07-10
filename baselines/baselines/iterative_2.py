@@ -223,8 +223,8 @@ class IterativeUnlearner(Trainer):
                 loss += -F.logsigmoid(self.beta / outputs_f.logits.shape[1] * neg_log_prob_ratio).mean() * 1 / self.beta
             else:    
                 loss += -F.logsigmoid(self.beta * neg_log_prob_ratio).mean() * 1 / self.beta
-            self.log({"pi(y|x)": torch.exp(log_p).mean().item()}, prog_bar=False)
-            self.log({"pi_ref(y|x)": torch.exp(log_p_ref).mean().item()}, prog_bar=False)
+            self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
+            self.log({"pi_ref(y|x)": torch.exp(log_p_ref).mean().item()})
         
         elif 'TWISE_top' in self.loss_type:
             logits = outputs_f.logits  # [B, S, V]
@@ -274,8 +274,8 @@ class IterativeUnlearner(Trainer):
                 loss += -F.logsigmoid(self.beta / outputs_f.logits.shape[1] * neg_log_prob_ratio).mean() * 1 / self.beta
             else:    
                 loss += -F.logsigmoid(self.beta * neg_log_prob_ratio).mean() * 1 / self.beta
-            self.log({"pi(y|x)": torch.exp(log_p).mean().item()}, prog_bar=False)
-            self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()}, prog_bar=False)
+            self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
+            self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()})
         elif 'npo_top' in self.loss_type:
             neg_log_ratio = outputs_f_ref.logits - outputs_f.logits
             loss += -F.logsigmoid(self.beta * neg_log_ratio).mean() * 2 / self.beta
