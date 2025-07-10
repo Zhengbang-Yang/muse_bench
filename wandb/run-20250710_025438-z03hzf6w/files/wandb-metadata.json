@@ -1,0 +1,80 @@
+{
+  "os":  "Linux-5.15.0-210.163.7.el8uek.x86_64-x86_64-with-glibc2.35",
+  "python":  "CPython 3.10.18",
+  "startedAt":  "2025-07-10T02:54:38.676672Z",
+  "args":  [
+    "--algo",
+    "TWISE_top_ref5",
+    "--model_dir",
+    "muse-bench/MUSE-Books_target",
+    "--tokenizer_dir",
+    "meta-llama/Llama-2-7b-hf",
+    "--data_file",
+    "/home/jovyan/workspace/data/books/raw/forget.txt",
+    "--retain_data_file",
+    "/home/jovyan/workspace/data/books/raw/retain1.txt",
+    "--out_dir",
+    "./ckpt/books/TWISE_top_ref5",
+    "--max_len",
+    "2048",
+    "--epochs",
+    "10",
+    "--lr",
+    "1e-5",
+    "--per_device_batch_size",
+    "2",
+    "--gradient_accumulation_steps",
+    "2",
+    "--report_to",
+    "wandb",
+    "--logging_steps",
+    "50",
+    "--k",
+    "5",
+    "--push_to_hub",
+    "--hub_model_id",
+    "zhengbang0707/TWISE_top_ref5"
+  ],
+  "program":  "/home/jovyan/workspace/muse_bench/baselines/unlearn.py",
+  "codePath":  "baselines/unlearn.py",
+  "codePathLocal":  "baselines/unlearn.py",
+  "git":  {
+    "remote":  "git@github.com:Zhengbang-Yang/muse_bench.git",
+    "commit":  "43b1aa58797f109132c78c27ee7102c2622b68be"
+  },
+  "email":  "zhengbang0707@gmail.com",
+  "root":  "/home/jovyan/workspace/muse_bench",
+  "host":  "w-zheng-unlearning-b42d9478aa914e36b16ff2728a7fa0a5-56dbd7cc46d",
+  "executable":  "/opt/saturncloud/envs/saturn/bin/python",
+  "cpu_count":  128,
+  "cpu_count_logical":  255,
+  "gpu":  "NVIDIA A100-SXM4-80GB",
+  "gpu_count":  2,
+  "disk":  {
+    "/":  {
+      "total":  "310183723008",
+      "used":  "137314340864"
+    }
+  },
+  "memory":  {
+    "total":  "2163702235136"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA A100-SXM4-80GB",
+      "memoryTotal":  "85899345920",
+      "cudaCores":  6912,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-3a6fd563-a178-4882-e8eb-a9e8c0f81a81"
+    },
+    {
+      "name":  "NVIDIA A100-SXM4-80GB",
+      "memoryTotal":  "85899345920",
+      "cudaCores":  6912,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-0b70d363-9ea7-3def-e69c-0494b4c67595"
+    }
+  ],
+  "cudaVersion":  "12.6",
+  "writerId":  "3h6j3um098jxav587qomhwl0h965e1p1"
+}

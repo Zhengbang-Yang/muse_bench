@@ -1,0 +1,32 @@
+  0%|                                                                                                                                                                            | 0/2770 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/home/jovyan/workspace/muse_bench/baselines/unlearn.py", line 126, in <module>
+    main()
+  File "/home/jovyan/workspace/muse_bench/baselines/unlearn.py", line 36, in main
+    it_unlearn(
+  File "/home/jovyan/workspace/muse_bench/baselines/baselines/iterative_2.py", line 81, in unlearn
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 1850, in train
+    return inner_training_loop(
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 2203, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 3138, in training_step
+    loss = self.compute_loss(model, inputs)
+  File "/home/jovyan/workspace/muse_bench/baselines/baselines/iterative_2.py", line 140, in compute_loss
+    outputs_f_ref = self.ref_model(
+TypeError: 'NoneType' object is not callable
+Traceback (most recent call last):
+  File "/home/jovyan/workspace/muse_bench/baselines/unlearn.py", line 126, in <module>
+    main()
+  File "/home/jovyan/workspace/muse_bench/baselines/unlearn.py", line 36, in main
+    it_unlearn(
+  File "/home/jovyan/workspace/muse_bench/baselines/baselines/iterative_2.py", line 81, in unlearn
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 1850, in train
+    return inner_training_loop(
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 2203, in _inner_training_loop
+    tr_loss_step = self.training_step(model, inputs)
+  File "/opt/saturncloud/envs/saturn/lib/python3.10/site-packages/transformers/trainer.py", line 3138, in training_step
+    loss = self.compute_loss(model, inputs)
+  File "/home/jovyan/workspace/muse_bench/baselines/baselines/iterative_2.py", line 140, in compute_loss
+    outputs_f_ref = self.ref_model(
+TypeError: 'NoneType' object is not callable

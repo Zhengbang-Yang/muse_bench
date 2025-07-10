@@ -37,7 +37,7 @@ def unlearn(
 
     ref_model = (
         load_model(model_dir)
-        if 'npo' in loss_type or 'kl' in loss_type
+        if 'npo' in loss_type or 'kl' in loss_type or 'ref' in loss_type
         else None
     )
 
@@ -99,10 +99,14 @@ class IterativeUnlearner(Trainer):
         self.k=k
         print(self.loss_type)
         if ref_model is not None:
-            assert 'po' in self.loss_type or 'kl' in self.loss_type
+            assert 'po' in self.loss_type or 'kl' in self.loss_type or 'ref' in self.loss_type
             ref_model = ref_model.eval()
 
         super().__init__(*args, **kwargs)
+
+    def save_model(self, output_dir=None, _internal_call=False):
+        if self.args.push_to_hub:
+            self.push_to_hub()
 
     def get_batch_loss(self, logits, labels):
         shifted_labels = labels[..., 1:].contiguous()
@@ -186,7 +190,7 @@ class IterativeUnlearner(Trainer):
             self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
             self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()})
 
-        elif 'TWISE_top' in self.loss_type and 'ref' in self.loss_type:
+        elif 'TWISE_top_ref' in self.loss_type and 'ref' in self.loss_type:
             logits_ref = outputs_f_ref.logits  # [B, S, V]
             labels_ref = x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone()
             
@@ -205,10 +209,10 @@ class IterativeUnlearner(Trainer):
             # 这里我们无条件拼接，保留 top-5 + label（共6个logits）
             extended_logits_ref = torch.cat([top5_logits_ref, label_logits_unsq_ref], dim=-1)  # [B, S, 6]
 
-            logits_f = outputs_f.logits
+            logits_f = outputs_f.logits  # [B, S, V]
+            labels_f = x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone()
             top5_logits_f = torch.gather(logits_f, dim=2, index=top5_indices_ref)
-            batch_size, seq_len = labels_ref.shape
-            label_logits_ref = torch.gather(logits_f, 2, labels_ref.unsqueeze(-1)).squeeze(-1)  # [B, S]
+            label_logits_f = torch.gather(logits_f, 2, labels_f.unsqueeze(-1)).squeeze(-1)  # [B, S]
             label_logits_unsq_f = label_logits_f.unsqueeze(-1)
             extended_logits_f = torch.cat([top5_logits_f, label_logits_unsq_f], dim=-1)  # [B, S, 6]
             
@@ -219,59 +223,8 @@ class IterativeUnlearner(Trainer):
                 loss += -F.logsigmoid(self.beta / outputs_f.logits.shape[1] * neg_log_prob_ratio).mean() * 1 / self.beta
             else:    
                 loss += -F.logsigmoid(self.beta * neg_log_prob_ratio).mean() * 1 / self.beta
-            self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
-            self.log({"pi_ref(y|x)": torch.exp(log_p_ref).mean().item()})
-        
-        elif 'TWISE_top_ref' in self.loss_type:
-            logits = outputs_f.logits  # [B, S, V]
-            labels = x_f['labels'] if 'labels' in x_f else x_f['input_ids'].clone()
-            
-            # Top-5 logits and their indices along vocab dimension
-            top5_logits, top5_indices = torch.topk(logits, k=5, dim=-1)  # both: [B, S, 5]
-            
-            # 为了收集每个 label 在 logits 中对应的值
-            batch_size, seq_len = labels.shape
-            label_logits = torch.gather(logits, 2, labels.unsqueeze(-1)).squeeze(-1)  # [B, S]
-            
-            # 拼接：每个位置的 top-5 + label 对应的 logit
-            # 为了能拼接，我们先扩展 label_logits 的维度
-            label_logits_unsq = label_logits.unsqueeze(-1)  # [B, S, 1]
-            
-            # 检查 label 是否已在 top-5 中（如果是，可以选择是否去重）
-            # 这里我们无条件拼接，保留 top-5 + label（共6个logits）
-            extended_logits = torch.cat([top5_logits, label_logits_unsq], dim=-1)  # [B, S, 6]
-            
-            # logits = outputs_f.logits
-            # top5_logits, top5_indices = torch.topk(outputs_f.logits, k=self.k, dim=-1)
-            # labels=x_f['labels']
-            # labels_unsq = labels.unsqueeze(-1)  # [batch_size, seq_len, 1]
-            # in_top5 = (top5_indices == labels_unsq).any(dim=-1)  # [batch_size, seq_len]
-            # final_logits = []
-            # for b in range(logits.size(0)):
-            #     batch_logits = []
-            #     for t in range(logits.size(1)):
-            #         top5 = top5_logits[b, t]
-            #         top5_ids = top5_indices[b, t]
-            #         label_id = labels[b, t].item()
-            
-            #         batch_logits.append(top5)
-            #         label_logit = logits[b, t, label_id].unsqueeze(0)
-            #         extended_logits = torch.cat([top5, label_logit], dim=0)
-            #         batch_logits.append(extended_logits)
-            #     final_logits.append(torch.stack(, dim=0))
-            # final_logits = torch.stack(final_logits, dim=0)
-            
-            log_p  = F.log_softmax(extended_logits,  dim=-1)[..., :-1, :]      # log π(y|x)
-            with torch.no_grad():
-                log_p_hat  = F.log_softmax(extended_logits,  dim=-1)[..., :-1, :]      # log π^(y|x)                 
-            log_1m_p_hat = torch.log1p(-torch.exp(log_p_hat).clamp_max(1-1e-7))  
-            neg_log_prob_ratio = log_1m_p_hat - log_p
-            if "ln" in self.loss_type:
-                loss += -F.logsigmoid(self.beta / outputs_f.logits.shape[1] * neg_log_prob_ratio).mean() * 1 / self.beta
-            else:    
-                loss += -F.logsigmoid(self.beta * neg_log_prob_ratio).mean() * 1 / self.beta
-            self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
-            self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()})
+            self.log({"pi(y|x)": torch.exp(log_p).mean().item()}, prog_bar=False)
+            self.log({"pi_ref(y|x)": torch.exp(log_p_ref).mean().item()}, prog_bar=False)
         
         elif 'TWISE_top' in self.loss_type:
             logits = outputs_f.logits  # [B, S, V]
@@ -321,9 +274,9 @@ class IterativeUnlearner(Trainer):
                 loss += -F.logsigmoid(self.beta / outputs_f.logits.shape[1] * neg_log_prob_ratio).mean() * 1 / self.beta
             else:    
                 loss += -F.logsigmoid(self.beta * neg_log_prob_ratio).mean() * 1 / self.beta
-            self.log({"pi(y|x)": torch.exp(log_p).mean().item()})
-            self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()})
-        elif 'npo' in self.loss_type:
+            self.log({"pi(y|x)": torch.exp(log_p).mean().item()}, prog_bar=False)
+            self.log({"1-pi^(y|x)": torch.exp(log_1m_p_hat).mean().item()}, prog_bar=False)
+        elif 'npo_top' in self.loss_type:
             neg_log_ratio = outputs_f_ref.logits - outputs_f.logits
             loss += -F.logsigmoid(self.beta * neg_log_ratio).mean() * 2 / self.beta
         elif 'ga' in self.loss_type:
